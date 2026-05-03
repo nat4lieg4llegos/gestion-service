@@ -1,85 +1,80 @@
-// Arreglo en memoria donde guardamos los datos (ej: proyectos)
+// Arreglo en memoria donde guardamos los datos
 let proyectos = [];
 
-//  GET → obtener todos los proyectos
-const getGestion = (req, res) => {
-    // Devuelve todo el arreglo
-    res.json(proyectos);
+// GET → obtener todos los proyectos
+const getGestion = (req, res, next) => {
+    try {
+        res.status(200).json(proyectos);
+    } catch (error) {
+        next(error);
+    }
 };
 
-//  POST → crear proyecto con validación
-const crearGestion = (req, res) => {
+// POST → crear proyecto (validación ahora está en middleware)
+const crearGestion = (req, res, next) => {
+    try {
+        const nuevo = {
+            id: proyectos.length + 1,
+            nombre: req.body.nombre
+        };
 
-    //  Validar que venga el campo "nombre"
-    if (!req.body.nombre) {
-        return res.status(400).json({
-            mensaje: "El campo nombre es obligatorio"
+        proyectos.push(nuevo);
+
+        res.status(201).json({
+            mensaje: "Proyecto creado correctamente",
+            data: nuevo
         });
+
+    } catch (error) {
+        next(error);
     }
-
-    //  Crear objeto con ID automático
-    const nuevo = {
-        id: proyectos.length + 1,
-        nombre: req.body.nombre
-    };
-
-    // Guardar en el arreglo
-    proyectos.push(nuevo);
-
-    // Respuesta
-    res.json({
-        mensaje: "Proyecto creado correctamente",
-        data: nuevo
-    });
 };
 
-//  PUT → actualizar un proyecto por id (posición en el arreglo)
-//  PUT → actualizar proyecto con validación
-const actualizarGestion = (req, res) => {
+// PUT → actualizar proyecto (validación ahora está en middleware)
+const actualizarGestion = (req, res, next) => {
+    try {
+        const id = parseInt(req.params.id);
 
-    const id = parseInt(req.params.id); // Convertir a número
+        // Validación de existencia (esto sí queda aquí)
+        if (!proyectos[id - 1]) {
+            return res.status(404).json({
+                mensaje: "Proyecto no encontrado"
+            });
+        }
 
-    //  Validar que el proyecto exista
-    if (!proyectos[id - 1]) {
-        return res.status(404).json({
-            mensaje: "Proyecto no encontrado"
+        proyectos[id - 1] = {
+            id: id,
+            nombre: req.body.nombre
+        };
+
+        res.status(200).json({
+            mensaje: "Proyecto actualizado correctamente"
         });
+
+    } catch (error) {
+        next(error);
     }
-
-    //  Validar que venga el campo "nombre"
-    if (!req.body.nombre) {
-        return res.status(400).json({
-            mensaje: "El campo nombre es obligatorio"
-        });
-    }
-
-    // Actualizar el proyecto
-    proyectos[id - 1] = {
-        id: id,
-        nombre: req.body.nombre
-    };
-
-    res.json({
-        mensaje: "Proyecto actualizado correctamente"
-    });
 };
 
-//  DELETE → eliminar un proyecto por id
-const eliminarGestion = (req, res) => {
-    const id = parseInt(req.params.id);
+// DELETE → eliminar un proyecto por id
+const eliminarGestion = (req, res, next) => {
+    try {
+        const id = parseInt(req.params.id);
 
-    // Si no existe, error 404
-    if (!proyectos[id]) {
-        return res.status(404).json({ mensaje: "No encontrado" });
+        if (!proyectos[id - 1]) {
+            return res.status(404).json({ mensaje: "No encontrado" });
+        }
+
+        proyectos.splice(id - 1, 1);
+
+        res.status(200).json({ mensaje: "Proyecto eliminado" });
+
+    } catch (error) {
+        next(error);
     }
-
-    // Elimina 1 elemento desde esa posición
-    proyectos.splice(id, 1);
-
-    res.json({ mensaje: "Proyecto eliminado" });
 };
 
-// Exporta las funciones para usarlas en las rutas
+// Exportar funciones
 module.exports = {
     getGestion,
     crearGestion,
